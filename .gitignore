@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+*.db
+jitter_history.db
+output/
+.pytest_cache/
+*.log
+.venv/

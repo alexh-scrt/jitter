@@ -1,0 +1,40 @@
+output_dir: "./output"
+
+github:
+  org: null
+  private: false
+  topic_tags:
+    - "tools"
+    - "jitter"
+
+models:
+  default: "claude-sonnet-4-6"
+  quality: "claude-opus-4-6"
+  max_tokens: 32768
+
+scout:
+  search_queries:
+    - "trending developer tools today"
+    - "new open source projects this week"
+    - "latest programming framework releases"
+    - "trending GitHub repositories this week"
+    - "new AI developer tools today"
+    - "innovative CLI tools trending today"
+    - "viral side projects developers today"
+    - "new Python libraries trending today"
+  max_results_per_query: 5
+  topic: "news"
+  time_range: "week"
+
+pipeline:
+  max_phases: 6
+  max_files_per_phase: 5
+  test_timeout_seconds: 60
+  max_retries_per_phase: 2
+
+logging:
+  level: "INFO"
+  file: "./jitter.log"
+
+history:
+  db_path: "./jitter_history.db"
