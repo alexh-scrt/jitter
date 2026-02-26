@@ -60,11 +60,22 @@ class GitHubService:
     ) -> str:
         """Push multiple files in a single atomic commit using Git Data API.
 
+        Uses the blob-first approach: each file is created as a Git blob,
+        then blob SHAs are referenced in the tree.  This avoids the ~100 KB
+        inline-content limit on ``create_git_tree`` and handles encoding
+        edge-cases that can cause 404 errors with inline content.
+
         Uses the repo's default branch if no branch is specified.
         Returns the new commit SHA.
         """
         if not files:
             logger.warning("No files to push, skipping commit")
+            return ""
+
+        # Filter out files with empty paths or content
+        valid_files = [f for f in files if f.path and f.path.strip() and f.content]
+        if not valid_files:
+            logger.warning("No valid files to push after filtering, skipping commit")
             return ""
 
         # Use the repo's actual default branch (main, master, etc.)
@@ -76,14 +87,20 @@ class GitHubService:
         latest_commit = repo.get_git_commit(ref.object.sha)
         base_tree = latest_commit.tree
 
-        # Build tree elements for all files
+        # Create blobs first, then reference them in the tree.
+        # This is more robust than inline content because:
+        # 1. No ~100 KB size limit per file
+        # 2. Proper UTF-8 encoding handled by the blob endpoint
+        # 3. Avoids 404 errors from malformed inline content
         tree_elements = []
-        for f in files:
+        for f in valid_files:
+            blob = repo.create_git_blob(f.content, "utf-8")
+            logger.debug("Created blob for %s: %s", f.path, blob.sha[:7])
             element = InputGitTreeElement(
                 path=f.path,
                 mode="100644",
                 type="blob",
-                content=f.content,
+                sha=blob.sha,
             )
             tree_elements.append(element)
 
@@ -101,7 +118,7 @@ class GitHubService:
 
         logger.info(
             "Pushed %d files: %s (%s)",
-            len(files),
+            len(valid_files),
             commit_message,
             new_commit.sha[:7],
         )
