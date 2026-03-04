@@ -14,14 +14,14 @@ models:
 
 scout:
   search_queries:
-    - "trending AI tools and frameworks today"
-    - "trending open source AI projects this week"
-    - "trending OSINT tools"
-    - "trending GitHub AI repositories this week"
-    - "new OSINT developer tools today"
-    - "innovative CLI AI tools trending today"
-    - "viral AI and OSINT side developer projects today"
-    - "new Python AI or OSINT libraries trending today"
+    - "trending developer tools today"
+    - "new open source projects this week"
+    - "latest programming framework releases"
+    - "trending GitHub repositories this week"
+    - "new AI developer tools today"
+    - "innovative CLI tools trending today"
+    - "viral side projects developers today"
+    - "new Python libraries trending today"
   max_results_per_query: 5
   topic: "news"
   time_range: "week"
@@ -37,4 +37,4 @@ logging:
   file: "./jitter.log"
 
 history:
-  EY_path: "./jitter_history.db"
+  db_path: "./jitter_history.db"
