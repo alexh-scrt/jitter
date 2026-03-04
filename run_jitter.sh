@@ -4,7 +4,7 @@
 # Scheduled via cron for 3:00 AM EST daily.
 #
 # Install:  crontab -e  then add:
-#   0 3 * * * /Users/ki11erc0der/Workspace/jitter/run_jitter.sh
+#   0 3 * * * /home/ubuntu/jitter/run_jitter.sh
 #
 # Note: macOS cron uses the system timezone. If your Mac is set to EST/ET,
 # use "0 3 * * *". If set to UTC, use "0 8 * * *" (3 AM EST = 8 AM UTC).

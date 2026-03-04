@@ -7,6 +7,7 @@ timeout restriction on non-streaming requests with high max_tokens.
 from __future__ import annotations
 
 import json
+import re
 from typing import TypeVar
 
 from anthropic import Anthropic
@@ -18,6 +19,28 @@ from jitter.utils.retry import api_retry
 logger = get_logger("anthropic_client")
 
 T = TypeVar("T", bound=BaseModel)
+
+
+# Valid JSON escape characters after a backslash
+_VALID_JSON_ESCAPES = frozenset('"\\bfnrtu/')
+
+
+def _fix_invalid_json_escapes(text: str) -> str:
+    """Replace invalid JSON escape sequences with double-backslash equivalents.
+
+    Claude sometimes generates code containing regex patterns (e.g. \\d, \\s, \\w)
+    inside JSON string values. These are not valid JSON escapes and cause parse
+    errors. This function escapes them so the JSON is parseable.
+    """
+
+    def _replacer(match: re.Match) -> str:
+        char = match.group(1)
+        if char in _VALID_JSON_ESCAPES:
+            return match.group(0)  # Leave valid escapes alone
+        return "\\\\" + char  # Double the backslash for invalid escapes
+
+    # Match any backslash followed by a single character
+    return re.sub(r"\\(.)", _replacer, text)
 
 
 class OutputTruncatedError(Exception):
@@ -112,7 +135,13 @@ class AnthropicService:
             raw_text = "\n".join(lines)
 
         # Parse and validate with Pydantic
-        parsed = output_model.model_validate_json(raw_text)
+        try:
+            parsed = output_model.model_validate_json(raw_text)
+        except Exception:
+            # Claude sometimes emits invalid JSON escape sequences (e.g. \d, \s
+            # from regex patterns in generated code). Fix them and retry.
+            raw_text = _fix_invalid_json_escapes(raw_text)
+            parsed = output_model.model_validate_json(raw_text)
         return parsed
 
     @api_retry
